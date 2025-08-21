@@ -9,5 +9,11 @@
   ],
   "routes": [
     { "src": "/(.*)", "dest": "app/main.py" }
-  ]
+  ],
+  "env": {
+    "TURSO_URL": "@turso_url",
+    "TURSO_AUTH_TOKEN": "@turso_auth_token",
+    "FRONTEND_URL": "https://brand-reg.vercel.app,http://localhost:3000",
+    "CORS_ORIGINS": "https://brand-reg.vercel.app,http://localhost:3000,http://127.0.0.1:3000"
+  }
 }
