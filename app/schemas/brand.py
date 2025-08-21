@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 from pydantic import BaseModel, Field
 
 
@@ -20,3 +20,10 @@ class Brand(BaseModel):
 	holder: str
 	status: Literal["active", "pending", "inactive"]
 	created_at: Optional[str] = None
+
+class PaginatedResponse(BaseModel):
+    items: List[Brand]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

@@ -3,7 +3,7 @@ from typing import List, Any
 from fastapi import APIRouter, HTTPException
 
 from app.db import get_client
-from app.schemas.brand import Brand, BrandCreate, BrandUpdate
+from app.schemas.brand import Brand, BrandCreate, BrandUpdate, PaginatedResponse
 
 
 router = APIRouter(prefix="/brands", tags=["brands"])
@@ -54,16 +54,41 @@ async def create_brand(payload: BrandCreate):
 		raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("", response_model=List[Brand])
-async def list_brands():
-	client = get_client()
-	try:
-		res = await client.execute(
-			"SELECT id, brand, holder, status, created_at FROM brands ORDER BY id ASC;"
-		)
-		return [_row_to_brand(row) for row in res.rows]
-	except Exception as e:
-		raise HTTPException(status_code=500, detail=str(e))
+@router.get("", response_model=PaginatedResponse)
+async def list_brands(page: int = 1, page_size: int = 5):
+    if page < 1:
+        page = 1
+    if page_size < 1:
+        page_size = 5
+    if page_size > 100:
+        page_size = 100
+
+    client = get_client()
+    try:
+        # Obtener el número total de registros
+        count_res = await client.execute("SELECT COUNT(*) FROM brands;")
+        total = count_res.rows[0][0]
+        
+        # Calcular el offset para la paginación
+        offset = (page - 1) * page_size
+        total_pages = (total + page_size - 1) // page_size  # Redondeo hacia arriba
+        
+        # Obtener los registros de la página actual
+        res = await client.execute(
+            "SELECT id, brand, holder, status, created_at FROM brands ORDER BY id ASC LIMIT ? OFFSET ?;",
+            [page_size, offset]
+        )
+        
+        items = [_row_to_brand(row) for row in res.rows]
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{brand_id}", response_model=Brand)
